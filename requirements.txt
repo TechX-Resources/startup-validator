@@ -4,3 +4,7 @@
 fastapi
 uvicorn[standard]
 pydantic
+
+# Testing (Week 2+)
+pytest
+httpx
