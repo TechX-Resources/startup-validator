@@ -4,13 +4,24 @@ Week 1: Basic skeleton; Week 5–6: wire up validation service.
 """
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
+from app.middleware import RequestLoggingMiddleware
 from app.schemas import IdeaInput, ValidationResponse
 
 app = FastAPI(
     title="Startup Idea Validator Agent",
     description="API for validating startup ideas using MCP-style agent (Model + Context + Tools + Orchestration).",
     version="0.1.0",
+)
+
+app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
