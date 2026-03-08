@@ -11,8 +11,14 @@ class Settings(BaseSettings):
         extra="ignore"
     )
 
+    # LLM provider (Google Gemini)
+    gemini_api_key: str = Field(default="", description="API Key for Google Gemini")
+
     # LLM provider (OpenAI)
     openai_api_key: str = Field(default="", description="API Key for OpenAI")
+
+    # LLM provider (Anthropic)
+    anthropic_api_key: str = Field(default="", description="API Key for Anthropic")
 
     # Vector DB path for embeddings
     vector_db_path: str = Field(default="./data/embeddings", description="Path to local vector database")

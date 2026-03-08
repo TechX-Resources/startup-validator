@@ -1,5 +1,4 @@
 # Startup Idea Validator Agent — minimal dependencies
-# Add more as you implement (e.g. openai, chromadb) in later weeks
 
 fastapi
 uvicorn[standard]
@@ -9,4 +8,6 @@ pydantic
 pytest
 httpx
 pydantic-settings
+google-genai
 openai
+anthropic
