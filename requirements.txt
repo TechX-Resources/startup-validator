@@ -8,3 +8,5 @@ pydantic
 # Testing (Week 2+)
 pytest
 httpx
+pydantic-settings
+openai
