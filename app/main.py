@@ -39,3 +39,17 @@ def validate_idea(body: IdeaInput):
     """
     # TODO (Week 5–6): return run_validation(body.idea)
     raise HTTPException(status_code=501, detail="Not implemented yet. Wire validation_service in Week 5–6.")
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Log startup information."""
+    print(f"Starting {settings.app_name} in {settings.app_env} mode...")
+    print(f"Debug Mode: {settings.debug}")
+    print(f"Server: {settings.host}:{settings.port}")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Log shutdown information."""
+    print(f"Shutting down {settings.app_name}...")
