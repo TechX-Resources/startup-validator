@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.middleware import RequestLoggingMiddleware
 from app.schemas import IdeaInput, ValidationResponse
+from app.services import run_validation
 
 app = FastAPI(
     title="Startup Idea Validator Agent",
@@ -34,8 +35,11 @@ def health():
 @app.post("/validate-idea", response_model=ValidationResponse)
 def validate_idea(body: IdeaInput):
     """
-    Validate a startup idea. Placeholder until Week 5–6.
-    TODO: Call validation_service.run_validation(body.idea) and return ValidationResponse.
+    Validate a startup idea and return a structured report.
     """
-    # TODO (Week 5–6): return run_validation(body.idea)
-    raise HTTPException(status_code=501, detail="Not implemented yet. Wire validation_service in Week 5–6.")
+    try:
+        return run_validation(body.idea)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Validation failed unexpectedly.") from exc

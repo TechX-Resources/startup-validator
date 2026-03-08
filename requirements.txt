@@ -5,6 +5,10 @@ fastapi
 uvicorn[standard]
 pydantic
 
+# Add these for Azure OpenAI
+openai
+python-dotenv
+
 # Testing (Week 2+)
 pytest
 httpx
