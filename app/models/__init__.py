@@ -1,4 +1,12 @@
 # LLM interaction layer
-from app.models.llm_client import LLMClient
+"""
+Models module for the Startup Idea Validator Agent.
+Exports LLM client and other model-related components.
+"""
 
-__all__ = ["LLMClient"]
+from .llm_client import LLMClient, llm_client
+
+__all__ = ["LLMClient", "llm_client"]
+
+# Singleton instance for easy importing across the application
+llm_client = LLMClient()
