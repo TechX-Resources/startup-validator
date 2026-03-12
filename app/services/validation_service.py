@@ -1,14 +1,10 @@
-"""
-Validation service — connects API to LLM and returns structured response.
-"""
 import json
 from app.models.llm_client import LLMClient
 
 llm = LLMClient()
 
 SYSTEM_PROMPT = """
-You are a startup idea validator. When given a startup idea, respond ONLY with a
-valid JSON object in this exact format (no extra text):
+You are a startup idea validator. Respond ONLY with a valid JSON object:
 {
   "score": <float 0-10>,
   "summary": "<short summary>",
@@ -20,17 +16,13 @@ valid JSON object in this exact format (no extra text):
 """
 
 def run_validation(idea: str, user_id: str = None, session_id: str = None) -> dict:
-    """Run full validation pipeline: OpenAI analysis → structured response."""
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": f"Validate this startup idea: {idea}"}
     ]
-
     raw = llm.chat(messages).strip()
-
     if raw.startswith("```"):
         raw = raw.split("```")[1]
         if raw.startswith("json"):
             raw = raw[4:]
-
     return json.loads(raw)
