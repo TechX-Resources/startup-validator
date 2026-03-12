@@ -1,30 +1,40 @@
 """
 Startup Idea Validator Agent — FastAPI application entry point.
-Week 1: Basic skeleton; Week 5–6: wire up validation service.
 """
-
 from fastapi import FastAPI, HTTPException
-
+from fastapi.middleware.cors import CORSMiddleware
 from app.schemas import IdeaInput, ValidationResponse
+from app.services.validation_service import run_validation
 
 app = FastAPI(
     title="Startup Idea Validator Agent",
-    description="API for validating startup ideas using MCP-style agent (Model + Context + Tools + Orchestration).",
-    version="0.1.0",
+    description="Validates startup ideas using LLM-powered analysis.",
+    version="0.2.0",
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health")
 def health():
-    """Health check for deployment and load balancers."""
-    return {"status": "ok", "service": "startup-idea-validator-agent"}
-
+    return {"status": "ok", "service": "startup-idea-validator-agent", "version": "0.2.0"}
 
 @app.post("/validate-idea", response_model=ValidationResponse)
 def validate_idea(body: IdeaInput):
-    """
-    Validate a startup idea. Placeholder until Week 5–6.
-    TODO: Call validation_service.run_validation(body.idea) and return ValidationResponse.
-    """
-    # TODO (Week 5–6): return run_validation(body.idea)
-    raise HTTPException(status_code=501, detail="Not implemented yet. Wire validation_service in Week 5–6.")
+    if not body.idea or len(body.idea.strip()) < 10:
+        raise HTTPException(
+            status_code=422,
+            detail="Idea must be at least 10 characters long."
+        )
+    try:
+        result = run_validation(body.idea)
+        return ValidationResponse(**result)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Validation failed: {str(e)}"
+        )
