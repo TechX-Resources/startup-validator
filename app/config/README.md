@@ -1,12 +1,15 @@
-# app/config
+# Config (Week 1)
 
-**Purpose:** Central configuration for the application (env vars, feature flags, paths).
+## Purpose
+Centralized configuration using Pydantic Settings.
 
-**What students will implement:**
-- Load settings from environment (e.g. `OPENAI_API_KEY`, `VECTOR_DB_PATH`).
-- Optional: Pydantic `Settings` class for type-safe config.
-- Keep secrets out of code; use `.env` only.
+## Environment Variables
+- `LLM_PROVIDER`: openai/anthropic
+- `OPENAI_API_KEY`: OpenAI API key
+- `ANTHROPIC_API_KEY`: Anthropic API key  
+- `SERPER_API_KEY`: Google search (serper.dev)
 
-**Weeks:** 1 (setup), then extend as needed.
-
-**Placeholder:** Add `settings.py` or `__init__.py` that exports config values (or leave empty until Week 1 implementation).
+## Usage
+```python
+from app.config import settings
+print(settings.VERSION)  # 0.1.0
