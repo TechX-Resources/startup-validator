@@ -41,9 +41,11 @@ wheels/
 data/raw/*
 !data/raw/.gitkeep
 !data/raw/README.md
+!data/raw/startup data.csv
 data/processed/*
 !data/processed/.gitkeep
 !data/processed/README.md
+!data/processed/startups.json
 data/embeddings/*
 !data/embeddings/.gitkeep
 !data/embeddings/README.md
