@@ -1,77 +1,74 @@
 """
 Web search tool — external capability for the agent to look up information.
-Week 3: Implement (mock or real API e.g. SerpAPI).
+
+Uses SerpAPI to fetch Google search results and returns a simple, structured list
+of results the agent (and downstream tools) can consume.
 """
+
+from __future__ import annotations
+
 import os
-import json
+from typing import Any, List, Dict
+
 import requests
+
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 SERP_URL = "https://serpapi.com/search.json"
 
 
-def _run_search(query: str, max_results: int = 5):
-    """Internal helper to call SerpAPI and return structured results."""
+def web_search(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
+    """
+    Run a web search and return structured search results.
+
+    Args:
+        query: Search query string.
+        max_results: Maximum number of results to return (capped to a small number).
+
+    Returns:
+        List of dicts: [{"title": str, "snippet": str, "url": str}, ...]
+    """
+    query = (query or "").strip()
+    if not query:
+        return []
 
     api_key = os.getenv("SERPAPI_API_KEY")
     if not api_key:
-        raise ValueError("SERPAPI_API_KEY not set")
+        raise ValueError("SERPAPI_API_KEY environment variable not set")
+
+    max_results = max(1, min(int(max_results), 10))
 
     params = {
         "engine": "google",
         "q": query,
         "num": max_results,
-        "api_key": api_key
+        "api_key": api_key,
     }
 
+    logger.info("Calling SerpAPI web search", extra={"query": query, "max_results": max_results})
     response = requests.get(SERP_URL, params=params, timeout=10)
     response.raise_for_status()
 
     data = response.json()
+    organic = data.get("organic_results") or []
 
-    results = []
-    for r in data.get("organic_results", [])[:max_results]:
-        results.append({
-            "title": r.get("title"),
-            "snippet": r.get("snippet"),
-            "url": r.get("link")
-        })
+    results: List[Dict[str, Any]] = []
+    for item in organic[:max_results]:
+        results.append(
+            {
+                "title": item.get("title"),
+                "snippet": item.get("snippet"),
+                "url": item.get("link"),
+            }
+        )
 
+    logger.info("SerpAPI web search returned %d results", len(results))
     return results
 
 
-def web_search_market_analysis(startup_idea: str, max_results: int = 5) -> dict:
-    """
-    Search the web to analyze startup market density and competitiveness.
-    Saves results to JSON for MCP usage.
-    """
-
-    queries = {
-        "competitors": f"{startup_idea} competitors startups",
-        #"market_size": f"{startup_idea} market size growth",
-        #"funding_activity": f"{startup_idea} startup funding venture capital",
-        #"user_pain_points": f"problems with {startup_idea}"
-    }
-
-    analysis = {}
-
-    for category, query in queries.items():
-        try:
-            analysis[category] = _run_search(query, max_results)
-        except Exception as e:
-            analysis[category] = {"error": str(e)}
-
-    result_data = {
-        "startup_idea": startup_idea,
-        "analysis": analysis
-    }
-
-    #filename = f"{startup_idea.replace(' ', '_')}_market_analysis.json"
-    #with open(filename, "w", encoding="utf-8") as f:
-    #    json.dump(result_data, f, indent=4)
-    return result_data
-    
-#testing:
 if __name__ == "__main__":
-    test_query = "Online meeting transcribing tool"
-    analysis = web_search_market_analysis(test_query)
-    print(analysis)
+    q = "Online Meeting AI Transcriber and Summarizer"
+    for idx, result in enumerate(web_search(q), start=1):
+        print(f"{idx}. {result['title']}\n   {result['snippet']}\n   URL: {result['url']}\n")
