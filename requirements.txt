@@ -10,3 +10,4 @@ pytest
 httpx
 
 requests
+openai
