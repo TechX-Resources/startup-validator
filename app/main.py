@@ -19,4 +19,4 @@ def validate_idea(body: IdeaInput):
         result = run_validation(body.idea)
         return ValidationResponse(**result)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Validation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Validation failed. Please try again.")
