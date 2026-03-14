@@ -13,3 +13,18 @@
 
 - idea_schema.py: defines the structure of idea request data
 - response_schema.py: defines the structure of API responses
+
+## Running the Backend Locally
+
+1.Copy `.env.example` to `.env`
+2.Install dependencies:
+
+pip install -r requirements.txt
+
+3.Run the server:
+
+uvicorn app.main:app --reload
+
+4.Open the API docs in browser:
+
+<http://127.0.0.1:8000/docs>
