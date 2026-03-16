@@ -1,55 +1,63 @@
-"""
-Startup Idea Validator Agent — FastAPI application entry point.
-Week 1: Basic skeleton; Week 5–6: wire up validation service.
-"""
-
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
-from app.middleware import RequestLoggingMiddleware
-from app.schemas import IdeaInput, ValidationResponse
+from app.config.settings import settings
+from app.schemas.idea import IdeaRequest, IdeaResponse  # Week 2 import
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO if not settings.debug else logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version}")
+    yield
+    # Shutdown
+    logger.info("👋 Shutting down gracefully")
 
 app = FastAPI(
-    title="Startup Idea Validator Agent",
-    description="API for validating startup ideas using MCP-style agent (Model + Context + Tools + Orchestration).",
-    version="0.1.0",
+    title=settings.app_name,
+    version=settings.app_version,
+    lifespan=lifespan
 )
-
-app.add_middleware(RequestLoggingMiddleware)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 
 @app.get("/health")
-def health():
-    """Health check for deployment and load balancers."""
-    return {"status": "ok", "service": "startup-idea-validator-agent"}
+async def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "ok",
+        "service": settings.app_name,
+        "version": settings.app_version,
+        "debug": settings.debug
+    }
 
-
-@app.post("/validate-idea", response_model=ValidationResponse)
-def validate_idea(body: IdeaInput):
+@app.post("/validate-idea", response_model=IdeaResponse, status_code=501)
+async def validate_idea(request: IdeaRequest):
     """
-    Validate a startup idea. Placeholder until Week 5–6.
-    TODO: Call validation_service.run_validation(body.idea) and return ValidationResponse.
+    Validate startup idea - PLACEHOLDER (Week 5-6 implementation)
+    
+    TODO Week 5: Replace with agent orchestration
     """
-    # TODO (Week 5–6): return run_validation(body.idea)
-    raise HTTPException(status_code=501, detail="Not implemented yet. Wire validation_service in Week 5–6.")
+    raise HTTPException(
+        status_code=501,
+        detail={
+            "error": "NotImplementedError",
+            "message": "Idea validation agent coming in Week 5-6 🚀",
+            "idea_summary": {
+                "description": request.idea,
+                "status": "placeholder"
+            }
+        }
+    )
 
-
-@app.on_event("startup")
-async def startup_event():
-    """Log startup information."""
-    print(f"Starting {settings.app_name} in {settings.app_env} mode...")
-    print(f"Debug Mode: {settings.debug}")
-    print(f"Server: {settings.host}:{settings.port}")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Log shutdown information."""
-    print(f"Shutting down {settings.app_name}...")
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "app.main:app",
+        host="127.0.0.1",
+        port=8000,
+        reload=True,
+        log_level="info"
+    )
