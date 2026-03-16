@@ -1,13 +1,4 @@
-# TODO (Week 1): Load config from env (e.g. os.getenv or pydantic-settings).
-# Export: OPENAI_API_KEY, VECTOR_DB_PATH, and any app-level settings.
 
-"""
-Configuration module for the Startup Idea Validator Agent.
-Exports all configuration settings for use across the application.
-
-Week 1: Load config from environment variables (pydantic-settings).
-Exports: OPENAI_API_KEY, VECTOR_DB_PATH, and app-level settings.
-"""
 
 from .settings import Settings, get_settings, settings
 
