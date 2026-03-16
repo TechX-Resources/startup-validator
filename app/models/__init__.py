@@ -1,8 +1,4 @@
-# LLM interaction layer
-"""
-Models module for the Startup Idea Validator Agent.
-Exports LLM client and other model-related components.
-"""
+
 
 from .llm_client import LLMClient, llm_client
 
