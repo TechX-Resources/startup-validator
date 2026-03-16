@@ -26,9 +26,9 @@ class TestMiddlewarePassthrough:
         assert resp.status_code == 200
         assert resp.json()["status"] == "ok"
 
-    def test_validate_idea_returns_501_placeholder(self):
+    def test_validate_idea_rejects_short_input(self):
         resp = client.post("/validate-idea", json={"idea": "Test idea"})
-        assert resp.status_code == 501
+        assert resp.status_code == 422
 
     def test_invalid_endpoint_returns_404(self):
         resp = client.get("/nonexistent")
