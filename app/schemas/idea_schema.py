@@ -1,114 +1,101 @@
 """
 Idea schema — structured input for validation requests.
 Week 2: Define; use in main.py and validation_service.
+Enhanced with full validation report structure for Week 5-6 agent output.
 """
 
 from pydantic import BaseModel, Field
+from typing import Optional, List, Dict, Any
+from app.models.base import ValidationScore  # Cross-layer reference
 
-
+# === INPUT SCHEMAS (Your original structure preserved) ===
 class IdeaInput(BaseModel):
     """Request body for /validate-idea."""
-
-    idea: str = Field(..., description="The startup idea to validate (plain text).")
-    # Optional: domain, industry, or extra context
-    # domain: str | None = None
-    # industry: str | None = None
-
-    # Example JSON:
-    # {"idea": "An AI app that summarizes long PDFs for students in 3 bullet points."}
-
-
-class IdeaWithContext(IdeaInput):
-    """Optional: idea + context from memory (used internally by service/agent)."""
-    # context_from_memory: list[dict] = []
-    pass
-
-
-# app/schemas/idea_schema.py
-"""
-Schemas for startup idea validation.
-Week 2: Input validation and response structures.
-"""
-
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional, List
-from datetime import datetime
-from enum import Enum
-
-
-class ValidationStatus(str, Enum):
-    """Status of the validation process."""
-    PENDING = "pending"
-    VALIDATED = "validated"
-    REJECTED = "rejected"
-
-
-class MarketPotential(str, Enum):
-    """Market potential rating."""
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
-
-class CompetitionLevel(str, Enum):
-    """Competition level rating."""
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
-
-class IdeaInput(BaseModel):
-    """Request body for /validate-idea."""
-
+    
     idea: str = Field(
-        ..., 
-        min_length=10, 
-        max_length=1000, 
-        description="The startup idea to validate (plain text)."
+        ...,
+        description="The startup idea to validate (plain text).",
+        min_length=10,
+        max_length=2000
     )
-    # Optional: domain, industry, or extra context
-    domain: Optional[str] = Field(default=None, max_length=100)
-    industry: Optional[str] = Field(default=None, max_length=100)
+    
+    # Optional: domain, industry, or extra context (uncomment when needed)
+    # domain: Optional[str] = Field(None, description="Problem domain")
+    # industry: Optional[str] = Field(None, description="Target industry")
+    # founder_experience: Optional[str] = Field(None, description="Your background")
 
-    @field_validator('idea')
-    @classmethod
-    def validate_idea_text(cls, v):
-        if not v.strip():
-            raise ValueError("Idea description cannot be empty or whitespace only")
-        return v
-
-    # Example JSON:
-    # {"idea": "An AI app that summarizes long PDFs for students in 3 bullet points."}
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "idea": "An AI app that summarizes long PDFs for students in 3 bullet points.",
+                    "domain": "EdTech",
+                    "industry": "AI Tools"
+                }
+            ]
+        }
+    }
 
 
 class IdeaWithContext(IdeaInput):
-    """Optional: idea + context from memory (used internally by service/agent)."""
-    context_from_memory: List[dict] = Field(default_factory=list)
+    """
+    Optional: idea + context from memory (used internally by service/agent).
+    Week 4+: Populated from vector store / session memory.
+    """
+    # context_from_memory: List[Dict[str, Any]] = Field(
+    #     default_factory=list,
+    #     description="Relevant past ideas / market data from memory"
+    # )
+    session_id: Optional[str] = Field(None, description="Session tracking")
 
+# === VALIDATION OUTPUT SCHEMAS (New - Week 2 enhancement) ===
+class MarketPotential(BaseModel):
+    """Market size estimation (Week 3 tool output)"""
+    tam: str  # Total Addressable Market
+    sam: str  # Serviceable Addressable Market  
+    som: str  # Serviceable Obtainable Market
+    growth_rate: Optional[str] = None
+    score: ValidationScore
+
+class CompetitionAnalysis(BaseModel):
+    """Competitor landscape (Week 3 tool output)"""
+    direct_competitors: List[str] = Field(default_factory=list)
+    indirect_competitors: List[str] = Field(default_factory=list)
+    competitive_moat: str
+    score: ValidationScore
+
+class FeasibilityAssessment(BaseModel):
+    """Technical & execution feasibility (Week 5 agent reasoning)"""
+    technical_feasibility: str
+    execution_risk: str
+    time_to_mvp: str
+    score: ValidationScore
 
 class ValidationReport(BaseModel):
-    """Structured validation report from the agent."""
-
-    idea: str
-    validation_status: ValidationStatus = ValidationStatus.VALIDATED
-    market_potential: MarketPotential = MarketPotential.MEDIUM
-    competition_level: CompetitionLevel = CompetitionLevel.MEDIUM
-    key_findings: List[str] = Field(default_factory=list)
+    """Complete structured validation output (Week 5-6 final response)"""
+    idea_summary: Dict[str, Any]
+    overall_score: ValidationScore
+    market_potential: MarketPotential
+    competition: CompetitionAnalysis
+    feasibility: FeasibilityAssessment
     recommendations: List[str] = Field(default_factory=list)
-    confidence_score: float = Field(ge=0.0, le=1.0, default=0.0)
-    model_used: str
-    timestamp: datetime = Field(default_factory=datetime.now)
-    validation_id: Optional[str] = None  # For tracking in memory (Week 4)
+    next_steps: List[str] = Field(default_factory=list)
+    validated_at: str = Field(..., description="ISO timestamp")
 
+# === API RESPONSE WRAPPERS ===
+class IdeaResponse(BaseModel):
+    """Success response for /validate-idea"""
+    success: bool = True
+    data: ValidationReport
 
-class APIResponse(BaseModel):
-    """Standard HTTP response wrapper."""
+class IdeaErrorResponse(BaseModel):
+    """Error response for /validate-idea"""
+    success: bool = False
+    error: Dict[str, str]
+    idea_summary: Dict[str, str]  # Echo back for debugging
 
-    success: bool
-    message: str
-    data: Optional[dict] = None
-    error: Optional[str] = None
-    status_code: int = 200
-
-    class Config:
-        from_attributes = True
+# === BACKWARD COMPATIBILITY ALIASES ===
+# Your main.py can use these - no breaking changes!
+IdeaRequest = IdeaInput      # For main.py endpoint
+IdeaValidationResponse = IdeaResponse
+ValidationErrorResponse = IdeaErrorResponse
