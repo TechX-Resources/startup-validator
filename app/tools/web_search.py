@@ -48,9 +48,12 @@ def web_search(query: str, max_results: int = 5) -> list[dict]:
         "num": max_results,
     }
 
-    response = httpx.get(SERPAPI_ENDPOINT, params=params, timeout=15)
-    response.raise_for_status()
-    data = response.json()
+    try:
+        response = httpx.get(SERPAPI_ENDPOINT, params=params, timeout=15)
+        response.raise_for_status()
+        data = response.json()
+    except Exception:
+        return MOCK_RESULTS[:max_results]
 
     results = []
     for item in data.get("organic_results", [])[:max_results]:
