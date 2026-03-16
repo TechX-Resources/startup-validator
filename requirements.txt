@@ -5,6 +5,9 @@ fastapi
 uvicorn[standard]
 pydantic
 
+# Tools (Week 3)
+python-dotenv
+
 # Testing (Week 2+)
 pytest
 httpx
