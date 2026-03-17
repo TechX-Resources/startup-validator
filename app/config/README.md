@@ -1,4 +1,4 @@
-# Config (Week 1)
+# Config 
 
 ## Purpose
 Centralized configuration using Pydantic Settings.
