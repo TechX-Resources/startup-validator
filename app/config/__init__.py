@@ -1,32 +1,39 @@
+"""
+Config layer — Centralized settings management.
+Week 1: Pydantic Settings + .env loading.
+Single source of truth for all app configuration.
+"""
 
-from .settings import Settings, get_settings, settings
+from .settings import settings, Settings
+from typing import Any
 
-# Export all configuration values
-__all__ = [
-    "Settings",
-    "get_settings",
-    "settings",
-    # App-level settings
-    "APP_NAME",
-    "APP_VERSION",
-    "DEBUG",
-    "HOST",
-    "PORT",
-    # External service settings
-    "OPENAI_API_KEY",
-    "VECTOR_DB_PATH",
-    # Feature flags
-    "ENABLE_SEARCH_TOOL",
-    "ENABLE_COMPETITOR_TOOL",
-]
+__all__ = ["settings", "Settings"]
 
-# Re-export individual settings for convenience
-APP_NAME: str = settings.APP_NAME
-APP_VERSION: str = settings.APP_VERSION
-DEBUG: bool = settings.DEBUG
-HOST: str = settings.HOST
-PORT: int = settings.PORT
-OPENAI_API_KEY: str | None = settings.OPENAI_API_KEY
-VECTOR_DB_PATH: str = settings.CHROMA_DB_PATH
-ENABLE_SEARCH_TOOL: bool = settings.ENABLE_SEARCH_TOOL
-ENABLE_COMPETITOR_TOOL: bool = settings.ENABLE_COMPETITOR_TOOL
+# Quick access (Week 3+ convenience)
+OPENAI_API_KEY = settings.openai_api_key
+ANTHROPIC_API_KEY = settings.anthropic_api_key
+VECTOR_DB_PATH = settings.vector_db_path
+DEBUG = settings.debug
+
+# App metadata
+APP_NAME = settings.app_name
+APP_VERSION = settings.app_version
+
+def get(key: str, default: Any = None) -> Any:
+    """
+    Dot-access config helper.
+    
+    Usage: config.get('llm.provider') or config.get('app.name')
+    """
+    from pydantic import ValidationError
+    
+    keys = key.split('.')
+    value = settings
+    
+    for k in keys:
+        if hasattr(value, k):
+            value = getattr(value, k)
+        else:
+            return default
+    
+    return value
