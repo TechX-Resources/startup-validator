@@ -1,5 +1,4 @@
 
-
 from .settings import Settings, get_settings, settings
 
 # Export all configuration values
