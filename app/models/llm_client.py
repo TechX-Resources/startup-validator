@@ -72,12 +72,7 @@ class LLMClient:
         return full_response
 
     def get_model_info(self) -> Dict[str, str]:
-        """
-        Get information about the current model configuration.
         
-        Returns:
-            Dict with model_name and provider info
-        """
         return {
             "model_name": self.model_name,
             "provider": "OpenAI",
