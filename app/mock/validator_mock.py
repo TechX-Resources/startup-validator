@@ -37,7 +37,7 @@ def generate_mock_response(idea: str) -> Dict[str, Union[str, int, List[str]]]:
     else:
         outlook = "challenging"
     
-    summary = f"The idea has {strengths[0].lower()} and {strengths[1].lower()}, but requires attention to {risks[0].lower()} and {risks[1].lower()}."
+    summary = f"The idea has {strengths[0].lower()} and {strengths[1].lower()}. Market outlook is {outlook}. However, requires attention to {risks[0].lower()} and {risks[1].lower()}."
     
     return {
         "idea": idea,
@@ -45,11 +45,11 @@ def generate_mock_response(idea: str) -> Dict[str, Union[str, int, List[str]]]:
         "strengths": strengths,
         "risks": risks,
         "market_outlook": outlook,
-        "summary": summary
+        "summary": summary,
+        "version": "1.1"  # <-- NOVO CAMPO
     }
 
 if __name__ == "__main__":
     test_idea = "Drone delivery app for small restaurants"
     result = generate_mock_response(test_idea)
-    print(json.dumps(result, indent=2))"" 
-
+    print(json.dumps(result, indent=2))
