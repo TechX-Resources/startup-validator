@@ -52,3 +52,4 @@ if __name__ == "__main__":
     test_idea = "Drone delivery app for small restaurants"
     result = generate_mock_response(test_idea)
     print(json.dumps(result, indent=2))"" 
+
