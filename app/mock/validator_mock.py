@@ -51,4 +51,4 @@ def generate_mock_response(idea: str) -> Dict[str, Union[str, int, List[str]]]:
 if __name__ == "__main__":
     test_idea = "Drone delivery app for small restaurants"
     result = generate_mock_response(test_idea)
-    print(json.dumps(result, indent=2))
+    print(json.dumps(result, indent=2))"" 
