@@ -57,6 +57,14 @@ data/embeddings/*
 .coverage
 htmlcov/
 
+# Node.js (frontend)
+node_modules/
+frontend/dist/
+frontend/node_modules/
+
+# Cursor IDE
+.cursor/
+
 # OS
 .DS_Store
 Thumbs.db
