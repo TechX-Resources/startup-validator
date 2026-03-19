@@ -134,12 +134,8 @@ POST /validate-idea
 {
   "idea": "An AI app that summarizes long PDFs for students in 3 bullet points."
 }
-
-
 ---
 
-### Response:
-```md
 **Example Response:**
 ```json
 {
@@ -150,5 +146,4 @@ POST /validate-idea
   "competitors": ["Notion AI", "ChatPDF"],
   "market_notes": "Growing demand in EdTech."
 }
-
 ---
