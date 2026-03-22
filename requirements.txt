@@ -11,3 +11,30 @@ python-dotenv
 # Testing (Week 2+)
 pytest
 httpx
+
+# Environment
+.env
+*.env.local
+*.env.*.local
+
+# Data
+data/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
