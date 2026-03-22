@@ -11,7 +11,6 @@ __description__ = "AI-powered startup idea validation agent"
 from .config import settings
 from .schemas import IdeaInput, ValidationResponse, IdeaWithContext
 
-# Re-exports for convenience
 __all__ = [
     "settings",
     "IdeaInput", 
