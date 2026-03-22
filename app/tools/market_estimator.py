@@ -1,206 +1,134 @@
-"""
-Market estimator tool — rough market size or growth for a given market/industry.
-Week 3: Implement (placeholder/mock or real data source).
-"""
 
+from typing import Dict, Any, Optional
+import re
+from app.models import get_llm, ValidationScore
+from app.config import OPENAI_API_KEY
 
-from typing import Dict, Optional
-import random
-from datetime import datetime
-from app.config import settings
-
-# Mock market data database
-MOCK_MARKET_DATA = [
-    {
-        "market": "AI Document Summarization",
-        "tam": 2500000000,
-        "sam": 750000000,
-        "som": 75000000,
-        "growth_rate": 0.35,
-        "source": "TechCrunch Market Analysis 2024"
-    },
-    {
-        "market": "EdTech Learning Tools",
-        "tam": 320000000000,
-        "sam": 96000000000,
-        "som": 9600000000,
-        "growth_rate": 0.12,
-        "source": "Statista EdTech Report 2024"
-    },
-    {
-        "market": "Legal Tech Automation",
-        "tam": 45000000000,
-        "sam": 13500000000,
-        "som": 1350000000,
-        "growth_rate": 0.25,
-        "source": "Legal Tech Industry Report 2024"
-    },
-    {
-        "market": "SaaS Content Writing Tools",
-        "tam": 15000000000,
-        "sam": 4500000000,
-        "som": 450000000,
-        "growth_rate": 0.18,
-        "source": "Gartner AI Writing Tools 2024"
-    },
-    {
-        "market": "AI Customer Support",
-        "tam": 28000000000,
-        "sam": 8400000000,
-        "som": 840000000,
-        "growth_rate": 0.22,
-        "source": "Forbes AI Support Market 2024"
-    },
-    {
-        "market": "Healthcare AI Diagnostics",
-        "tam": 180000000000,
-        "sam": 54000000000,
-        "som": 5400000000,
-        "growth_rate": 0.28,
-        "source": "McKinsey Healthcare AI 2024"
-    },
-    {
-        "market": "E-commerce Personalization",
-        "tam": 65000000000,
-        "sam": 19500000000,
-        "som": 1950000000,
-        "growth_rate": 0.15,
-        "source": "eMarketer Personalization 2024"
-    },
-    {
-        "market": "Financial Planning AI",
-        "tam": 35000000000,
-        "sam": 10500000000,
-        "som": 1050000000,
-        "growth_rate": 0.20,
-        "source": "Bloomberg Fintech AI 2024"
-    }
-]
-
-
-def market_estimator(market_or_industry: str) -> dict:
-    """
-    Given a market or industry name, return a rough estimate (TAM, SAM, SOM, growth rate).
+MARKET_DATA = {
+    # Tech/Software
+    "fintech": {"tam": "$500B", "sam": "$100B", "growth": "18% CAGR", "source": "McKinsey 2024"},
+    "edtech": {"tam": "$400B", "sam": "$80B", "growth": "12% CAGR", "source": "HolonIQ 2024"},
+    "healthtech": {"tam": "$600B", "sam": "$120B", "growth": "15% CAGR", "source": "CB Insights"},
+    "saas": {"tam": "$300B", "sam": "$60B", "growth": "20% CAGR", "source": "Gartner 2024"},
+    "ecommerce": {"tam": "$8T", "sam": "$1.5T", "growth": "10% CAGR", "source": "Statista"},
     
-    Week 3 Implementation: Mock data with keyword matching
-    Future Enhancement: Integrate with Statista, Gartner, or IBISWorld API
+    # AI/ML
+    "ai": {"tam": "$1T", "sam": "$200B", "growth": "37% CAGR", "source": "McKinsey Global"},
+    "generative ai": {"tam": "$400B", "sam": "$80B", "growth": "45% CAGR", "source": "Bloomberg"},
+    "computer vision": {"tam": "$50B", "sam": "$15B", "growth": "25% CAGR", "source": "MarketsandMarkets"},
     
-    Args:
-        market_or_industry: Market or industry name to estimate
+    # Consumer
+    "fitness": {"tam": "$100B", "sam": "$20B", "growth": "8% CAGR", "source": "Statista"},
+    "personal finance": {"tam": "$200B", "sam": "$40B", "growth": "12% CAGR", "source": "Forrester"},
+}
+
+
+async def market_estimator(market_or_industry: str) -> Dict[str, Any]:
+   
     
-    Returns:
-        Dictionary with market data:
-        {
-            "market": str,
-            "tam": float (Total Addressable Market in USD),
-            "sam": float (Serviceable Addressable Market in USD),
-            "som": float (Serviceable Obtainable Market in USD),
-            "growth_rate": float (Annual growth rate as decimal),
-            "source": str (Data source reference)
+    market_or_industry = market_or_industry.lower().strip()
+    
+    # 1. Exact match in known data
+    if market_or_industry in MARKET_DATA:
+        data = MARKET_DATA[market_or_industry]
+        return {
+            **data,
+            "market": market_or_industry.title(),
+            "confidence": "high",
+            "score": ValidationScore(score=9.0, reasoning=f"Known market: {data['source']}"),
+            "method": "lookup"
         }
-    """
     
-    # Normalize input for matching
-    query = market_or_industry.lower()
-    keywords = query.split()
+    # 2. Fuzzy match (plural/singular)
+    for known_market, data in MARKET_DATA.items():
+        if known_market in market_or_industry or market_or_industry in known_market:
+            return {
+                **data, 
+                "market": data["market"] if "market" in data else known_market.title(),
+                "confidence": "medium",
+                "score": ValidationScore(score=8.0, reasoning=f"Fuzzy match: {known_market}"),
+                "method": "fuzzy_match"
+            }
     
-    # Find matching market data
-    matching_results = []
+    # 3. LLM estimation for unknown markets
+    return await _llm_market_estimate(market_or_industry)
+
+
+async def _llm_market_estimate(market: str) -> Dict[str, Any]:
+    """LLM-powered estimation for unknown markets"""
+    if not OPENAI_API_KEY:
+        return _mock_fallback(market)
     
-    for market_data in MOCK_MARKET_DATA:
-        market_lower = market_data["market"].lower()
-        # Check if any keyword matches
-        matches = sum(1 for keyword in keywords if keyword in market_lower)
+    try:
+        llm = get_llm()
+        prompt = f"""
+        Estimate market size for "{market}" startup opportunity.
         
-        if matches >= 1:
-            matching_results.append(market_data)
+        Return ONLY valid JSON:
+        {{
+            "tam": "$XXXB" or "$XXXT",
+            "sam": "$XXXB", 
+            "growth": "XX% CAGR",
+            "confidence": "high|medium|low",
+            "reasoning": "1-2 sentences"
+        }}
+        
+        Examples:
+        - FinTech: {{"tam": "$500B", "sam": "$100B", "growth": "18% CAGR"}}
+        - EdTech: {{"tam": "$400B", "sam": "$80B", "growth": "12% CAGR"}}
+        """
+        
+       response = await llm.chat([{"role": "user", "content": prompt}])
+        
+        # Parse LLM JSON response
+        json_match = re.search(r'\{.*\}', response.content, re.DOTALL)
+        if json_match:
+            import json
+            data = json.loads(json_match.group())
+            return {
+                **data,
+                "market": market.title(),
+                "confidence": data.get("confidence", "low"),
+                "score": ValidationScore(
+                    score=6.0 if data.get("confidence") == "low" else 7.5,
+                    reasoning=data.get("reasoning", "LLM estimate")
+                ),
+                "method": "llm_estimate"
+            }
     
-    # If no matches found, return random market data
-    if not matching_results:
-        matching_results = [random.choice(MOCK_MARKET_DATA)]
+    except Exception as e:
+        print(f"LLM estimation failed: {e}")
     
-    # Return best match (first one)
-    result = matching_results[0].copy()
-    result["market"] = market_or_industry  # Use original input for market name
-    
-    return result
+    # 4. Fallback
+    return _mock_fallback(market)
 
 
-def market_estimator_detailed(market_or_industry: str) -> dict:
-    """
-    Extended version with additional market insights.
-    
-    Returns:
-        Dictionary with detailed market analysis:
-        {
-            "market": str,
-            "tam": float,
-            "sam": float,
-            "som": float,
-            "growth_rate": float,
-            "cagr_5yr": float,
-            "key_players": list[str],
-            "market_trends": list[str],
-            "source": str,
-            "last_updated": str
-        }
-    """
-    
-    base_data = market_estimator(market_or_industry)
-    
-    # Add additional insights
-    detailed_data = {
-        **base_data,
-        "cagr_5yr": base_data["growth_rate"] * 1.1,  # 5-year CAGR estimate
-        "key_players": [
-            "Market Leader A",
-            "Market Leader B",
-            "Emerging Competitor C"
-        ],
-        "market_trends": [
-            "AI integration increasing",
-            "Mobile-first adoption",
-            "Enterprise demand growing"
-        ],
-        "last_updated": datetime.now().strftime("%Y-%m-%d")
+
+def _mock_fallback(market: str) -> Dict[str, Any]:
+    """Graceful degradation for missing LLM"""
+    return {
+        "market": market.title(),
+        "tam": "TBD ($10B-$100B)",
+        "sam": "TBD ($1B-$10B)", 
+        "growth": "TBD (10-20% CAGR)",
+        "source": "Estimator fallback",
+        "confidence": "low",
+        "score": ValidationScore(score=4.0, reasoning="No data available"),
+        "method": "fallback"
     }
-    
-    return detailed_data
 
 
-def market_estimator_real_api(market_or_industry: str) -> dict:
-    """
-    TODO: Week 3+ - Implement real API integration (Statista, Gartner, IBISWorld)
-    This is a placeholder for future enhancement.
+# ── Test / Demo ─────────────────────────────────────
+if __name__ == "__main__":
+    import asyncio
+    async def demo():
+        print("=== Market Estimator Demo ===\n")
+        
+        # Known markets
+        print("1. Known:", await market_estimator("fintech"))
+        print("2. Fuzzy:", await market_estimator("AI tools"))
+        
+        # Unknown (LLM)
+        print("3. Unknown:", await market_estimator("quantum computing"))
     
-    Returns:
-        Dictionary with real market data from external API
-    """
-    # Example integration with Statista API (requires API key)
-    # import requests
-    # import os
-    #
-    # API_KEY = os.getenv("STATISTA_API_KEY")
-    # if not API_KEY:
-    #     return market_estimator(market_or_industry)  # Fallback to mock
-    #
-    # response = requests.get(
-    #     f"https://api.statista.com/v3/market/{market_or_industry}",
-    #     headers={"Authorization": f"Bearer {API_KEY}"}
-    # )
-    #
-    # if response.status_code == 200:
-    #     data = response.json()
-    #     return {
-    #         "market": data.get("market_name", market_or_industry),
-    #         "tam": data.get("tam", 0),
-    #         "sam": data.get("sam", 0),
-    #         "som": data.get("som", 0),
-    #         "growth_rate": data.get("growth_rate", 0),
-    #         "source": "Statista API",
-    #         "last_updated": data.get("last_updated", "")
-    #     }
-    #
-    # return market_estimator(market_or_industry)  # Fallback to mock
-    
-    raise NotImplementedError("Real API integration not yet implemented.")
+    asyncio.run(demo())
