@@ -118,7 +118,6 @@ def _mock_fallback(market: str) -> Dict[str, Any]:
     }
 
 
-# ── Test / Demo ─────────────────────────────────────
 if __name__ == "__main__":
     import asyncio
     async def demo():
