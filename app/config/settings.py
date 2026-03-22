@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
     
-    # Paths (Week 4+)
+    
     chroma_path: str = "./data/chroma"
     
     class Config:
