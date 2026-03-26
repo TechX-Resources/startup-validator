@@ -11,3 +11,7 @@ python-dotenv
 # Testing (Week 2+)
 pytest
 httpx
+
+# Security & Settings 
+slowapi
+pydantic-settings
