@@ -1,28 +1,30 @@
-import json
-from app.models.llm_client import LLMClient
-
-llm = LLMClient()
-
-SYSTEM_PROMPT = """
-You are a startup idea validator. Respond ONLY with a valid JSON object:
-{
-  "score": <float 0-10>,
-  "summary": "<short summary>",
-  "strengths": ["<strength1>", "<strength2>"],
-  "risks": ["<risk1>", "<risk2>"],
-  "competitors": ["<competitor1>", "<competitor2>"],
-  "market_notes": "<market size or growth notes>"
-}
+"""
+Validation service — connects API to validator agent and memory.
 """
 
-def run_validation(idea: str, user_id: str = None, session_id: str = None) -> dict:
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": f"Validate this startup idea: {idea}"}
-    ]
-    raw = llm.chat(messages).strip()
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-    return json.loads(raw)
+from __future__ import annotations
+
+import re
+
+from app.agents.validator_agent import run_validator
+
+
+def _normalize_text(value: str) -> str:
+    return re.sub(r"\s+", " ", value.strip())
+
+
+def run_validation(idea: str, user_id: str | None = None, session_id: str | None = None) -> dict:
+    """
+    Run the validation pipeline and return a response-schema compatible dict.
+    """
+    normalized_idea = _normalize_text(idea)
+    if not normalized_idea:
+        raise ValueError("Idea cannot be empty.")
+
+    # TODO (memory phase): pull context by user_id/session_id and pass to validator.
+    context = None
+
+    result = run_validator(normalized_idea, context=context)
+
+    # TODO (memory phase): persist result with memory store.
+    return result

@@ -4,8 +4,10 @@
 fastapi
 uvicorn[standard]
 pydantic
+pydantic-settings
 
-# Tools (Week 3)
+# Add these for Azure OpenAI
+openai
 python-dotenv
 
 # Testing (Week 2+)
