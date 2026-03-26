@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from typing import Optional
 from enum import Enum
 
@@ -6,23 +7,19 @@ class LLMProvider(str, Enum):
     AUTO = "auto"
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
+    GROQ = "groq"
 
 class Settings(BaseSettings):
-    # App
+    model_config = ConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
+
     app_name: str = "startup-idea-validator-agent"
     app_version: str = "0.1.0"
     debug: bool = False
-    
-    # LLM
     llm_provider: LLMProvider = LLMProvider.AUTO
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
-    
-    # Paths (Week 4+)
+    groq_api_key: Optional[str] = None
     chroma_path: str = "./data/chroma"
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    vector_db_path: str = "./data/embeddings"
 
 settings = Settings()
