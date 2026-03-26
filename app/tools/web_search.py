@@ -1,11 +1,8 @@
-"""
-Web search tool — external capability for the agent to look up information.
-Uses SerpAPI for real search results, falls back to mock data when no API key is set.
-"""
-
+import logging
 import os
 import httpx
 
+logger = logging.getLogger(__name__)
 
 SERPAPI_ENDPOINT = "https://serpapi.com/search"
 
@@ -39,6 +36,7 @@ def web_search(query: str, max_results: int = 5) -> list[dict]:
     api_key = os.getenv("SERPAPI_API_KEY")
 
     if not api_key:
+        logger.info("SERPAPI_API_KEY not found, using mock results.")
         return MOCK_RESULTS[:max_results]
 
     params = {
@@ -49,18 +47,27 @@ def web_search(query: str, max_results: int = 5) -> list[dict]:
     }
 
     try:
-        response = httpx.get(SERPAPI_ENDPOINT, params=params, timeout=15)
+        response = httpx.get(SERPAPI_ENDPOINT, params=params, timeout=20)
         response.raise_for_status()
         data = response.json()
-    except Exception:
+    except httpx.HTTPStatusError as e:
+        logger.error(f"SerpAPI error (status {e.response.status_code}): {e}")
+        return MOCK_RESULTS[:max_results]
+    except Exception as e:
+        logger.error(f"Unexpected error during search for '{query}': {e}")
         return MOCK_RESULTS[:max_results]
 
     results = []
-    for item in data.get("organic_results", [])[:max_results]:
+    organic = data.get("organic_results", [])
+    if not organic:
+        logger.warning(f"No organic results found for query: {query}")
+        return MOCK_RESULTS[:max_results]
+
+    for item in organic[:max_results]:
         results.append({
-            "title": item.get("title", ""),
-            "snippet": item.get("snippet", ""),
-            "link": item.get("link", ""),
+            "title": item.get("title", "No Title"),
+            "snippet": item.get("snippet", "No Snippet"),
+            "link": item.get("link", "#"),
         })
 
     return results

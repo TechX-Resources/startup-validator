@@ -17,12 +17,15 @@ class Settings(BaseSettings):
     llm_provider: LLMProvider = LLMProvider.AUTO
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
+    gemini_api_key: Optional[str] = None
     
     # Paths (Week 4+)
     chroma_path: str = "./data/chroma"
+    vector_db_path: str = "./data/embeddings"
     
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"
 
 settings = Settings()
