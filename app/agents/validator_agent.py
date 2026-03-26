@@ -5,28 +5,7 @@ Week 5: Implemented with LLM reasoning and structured output.
 
 import json
 from app.models.llm_client import LLMClient
-
-
-VALIDATION_SYSTEM_PROMPT = """You are an expert startup validator and investor advisor. Your role is to analyze startup ideas and provide honest, actionable feedback.
-
-When given a startup idea, you must evaluate it across multiple dimensions:
-1. Market viability and demand
-2. Competitive landscape and differentiation
-3. Technical feasibility and execution complexity
-4. Business model potential
-5. Risk factors and barriers to entry
-
-You MUST respond with valid JSON in this exact format:
-{
-  "score": <float between 0.0 and 10.0>,
-  "summary": "<2-3 sentence executive summary>",
-  "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
-  "risks": ["<risk 1>", "<risk 2>", "<risk 3>"],
-  "competitors": ["<competitor 1>", "<competitor 2>", "<competitor 3>"],
-  "market_notes": "<market size, growth trends, or TAM estimate>"
-}
-
-Be direct and honest. Focus on actionable insights over generic platitudes."""
+from app.prompts.templates import build_validation_messages
 
 
 def run_validator(idea: str, context: dict = None) -> dict:
@@ -40,16 +19,8 @@ def run_validator(idea: str, context: dict = None) -> dict:
     # Initialize LLM client
     client = LLMClient()
     
-    # Build messages
-    messages = [
-        {"role": "system", "content": VALIDATION_SYSTEM_PROMPT},
-        {"role": "user", "content": f"Validate this startup idea:\n\n{idea}"}
-    ]
-    
-    # Add optional context from memory if provided
-    if context:
-        context_str = json.dumps(context, indent=2)
-        messages.append({"role": "system", "content": f"Additional context:\n{context_str}"})
+    # Build messages using centralized prompts
+    messages = build_validation_messages(idea)
     
     # Call LLM
     try:
