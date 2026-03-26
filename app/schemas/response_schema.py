@@ -5,6 +5,14 @@ Week 2: Define; use in agent output and API response.
 
 from pydantic import BaseModel, Field
 
+# The schema defines the structure of API response
+# It includes:
+# - score: evaluation score(0-10)
+# - summary: short explanation of the evaluation
+# - strengths: key strengths of the idea
+# - risks: possible risks or challenges
+# - competitors: existing competitors
+# - market_notes: additional market insights 
 
 class ValidationResponse(BaseModel):
     """Structured validation result returned by the agent and API."""

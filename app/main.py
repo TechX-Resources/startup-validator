@@ -1,7 +1,5 @@
-"""
-Startup Idea Validator Agent — FastAPI application entry point.
-Week 1: Basic skeleton; Week 5–6: wire up validation service.
-"""
+from dotenv import load_dotenv
+load_dotenv()
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,11 +8,7 @@ from app.middleware import RequestLoggingMiddleware
 from app.schemas import IdeaInput, ValidationResponse
 from app.services import run_validation
 
-app = FastAPI(
-    title="Startup Idea Validator Agent",
-    description="API for validating startup ideas using MCP-style agent (Model + Context + Tools + Orchestration).",
-    version="0.1.0",
-)
+app = FastAPI(title="Startup Idea Validator Agent", version="0.2.0")
 
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
@@ -26,17 +20,25 @@ app.add_middleware(
 )
 
 
+@app.get("/")
+def root():
+    return {
+        "service": "startup-idea-validator-agent",
+        "status": "ok",
+        "endpoints": {
+            "health": "/health",
+            "docs": "/docs",
+            "validate": "/validate-idea",
+        },
+    }
+
+
 @app.get("/health")
 def health():
-    """Health check for deployment and load balancers."""
-    return {"status": "ok", "service": "startup-idea-validator-agent"}
-
+    return {"status": "ok", "service": "startup-idea-validator-agent", "version": "0.2.0"}
 
 @app.post("/validate-idea", response_model=ValidationResponse)
 def validate_idea(body: IdeaInput):
-    """
-    Validate a startup idea and return a structured report.
-    """
     try:
         return run_validation(body.idea)
     except ValueError as exc:

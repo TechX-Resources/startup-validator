@@ -60,10 +60,6 @@ distance_task.py
 test.py
 test_azure.py
 
-# Documentation (PR/temp files)
-PR_DESCRIPTION.md
-CONSOLIDATE_PROMPTS_PR.md
-
 # Node.js (frontend)
 node_modules/
 frontend/dist/

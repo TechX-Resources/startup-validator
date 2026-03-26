@@ -4,6 +4,7 @@
 fastapi
 uvicorn[standard]
 pydantic
+pydantic-settings
 
 # Add these for Azure OpenAI
 openai
