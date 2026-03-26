@@ -5,6 +5,10 @@ fastapi
 uvicorn[standard]
 pydantic
 
+# Data pipeline
+pandas
+scikit-learn
+
 # Testing (Week 2+)
 pytest
 httpx
