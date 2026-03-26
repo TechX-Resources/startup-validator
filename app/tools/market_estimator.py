@@ -51,9 +51,10 @@ def market_estimator(market_or_industry: str) -> dict:
         
         raw_response = llm.chat(messages).strip()
         
-        # Clean potential markdown wrapping
-        if raw_response.startswith("```"):
-            raw_response = re.sub(r"```(json)?", "", raw_response).strip()
+        # Robust JSON extraction
+        json_match = re.search(r"(\{.*\})", raw_response, re.DOTALL)
+        if json_match:
+            raw_response = json_match.group(1)
         
         market_data = json.loads(raw_response)
         if not isinstance(market_data, dict):

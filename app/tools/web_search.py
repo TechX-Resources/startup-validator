@@ -2,66 +2,48 @@ import logging
 import os
 import httpx
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
-SERPAPI_ENDPOINT = "https://serpapi.com/search"
-
-# Mock results used when SERPAPI_API_KEY is not set (for testing / offline dev)
-MOCK_RESULTS = [
-    {
-        "title": "Market Analysis: Startup Trends 2025",
-        "snippet": "The startup ecosystem continues to grow with AI-driven solutions leading investment rounds.",
-        "link": "https://example.com/market-analysis",
-    },
-    {
-        "title": "How to Validate a Startup Idea",
-        "snippet": "Key validation steps include market sizing, competitor analysis, and customer interviews.",
-        "link": "https://example.com/validate-idea",
-    },
-    {
-        "title": "Emerging Industries Report",
-        "snippet": "Healthcare AI, climate tech, and developer tools are seeing the fastest growth.",
-        "link": "https://example.com/emerging-industries",
-    },
-]
-
+SERPER_ENDPOINT = "https://google.serper.dev/search"
 
 def web_search(query: str, max_results: int = 5) -> list[dict]:
     """
-    Search the web for the given query and return a list of results.
-
-    Each result is a dict with keys: title, snippet, link.
-    Falls back to mock data when SERPAPI_API_KEY is not set.
+    Search the web for the given query and return a list of results using Serper.dev.
     """
-    api_key = os.getenv("SERPAPI_API_KEY")
+    api_key = settings.serper_api_key
 
     if not api_key:
-        logger.info("SERPAPI_API_KEY not found, using mock results.")
-        return MOCK_RESULTS[:max_results]
+        logger.error("SERPER_API_KEY not found in settings.")
+        return []
 
-    params = {
-        "q": query,
-        "api_key": api_key,
-        "engine": "google",
-        "num": max_results,
+    headers = {
+        'X-API-KEY': api_key,
+        'Content-Type': 'application/json'
+    }
+    payload = {
+        'q': query,
+        'num': max_results
     }
 
     try:
-        response = httpx.get(SERPAPI_ENDPOINT, params=params, timeout=20)
+        response = httpx.post(SERPER_ENDPOINT, headers=headers, json=payload, timeout=20)
         response.raise_for_status()
         data = response.json()
     except httpx.HTTPStatusError as e:
-        logger.error(f"SerpAPI error (status {e.response.status_code}): {e}")
-        return MOCK_RESULTS[:max_results]
+        logger.error(f"Serper error (status {e.response.status_code}): {e}")
+        return []
     except Exception as e:
         logger.error(f"Unexpected error during search for '{query}': {e}")
-        return MOCK_RESULTS[:max_results]
+        return []
 
     results = []
-    organic = data.get("organic_results", [])
+    # Serper returns results in "organic" list
+    organic = data.get("organic", [])
     if not organic:
         logger.warning(f"No organic results found for query: {query}")
-        return MOCK_RESULTS[:max_results]
+        return []
 
     for item in organic[:max_results]:
         results.append({

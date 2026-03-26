@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from app.tools.web_search import web_search
 from app.models.llm_client import LLMClient
 
@@ -53,13 +54,24 @@ def competitor_finder(idea_summary: str, domain: str = None) -> list[dict]:
         
         raw_response = llm.chat(messages).strip()
         
-        # Clean potential markdown wrapping
-        if raw_response.startswith("```"):
-            raw_response = raw_response.split("```")[1]
-            if raw_response.startswith("json"):
-                raw_response = raw_response[4:]
+        if not raw_response:
+            logger.error("LLM returned an empty response. Retrying once.")
+            raw_response = llm.chat(messages).strip() # Retry once
         
-        competitors = json.loads(raw_response)
+        if not raw_response:
+            logger.error("LLM returned an empty response after retry.")
+            raise ValueError("LLM returned an empty response")
+
+        # Robust JSON extraction
+        json_match = re.search(r"(\[.*\]|\{.*\})", raw_response, re.DOTALL)
+        if json_match:
+            raw_response = json_match.group(1)
+        
+        try:
+            competitors = json.loads(raw_response)
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error in competitor_finder. Raw response: {raw_response}")
+            raise e
         if not isinstance(competitors, list):
             logger.warning("LLM returned non-list for competitors. Falling back.")
             return [{"name": res["title"], "description": res["snippet"], "url": res["link"]} for res in search_results[:3]]

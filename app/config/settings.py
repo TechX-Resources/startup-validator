@@ -6,6 +6,8 @@ class LLMProvider(str, Enum):
     AUTO = "auto"
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
+    GEMINI = "gemini"
+    GROK = "grok"
 
 class Settings(BaseSettings):
     # App
@@ -18,6 +20,8 @@ class Settings(BaseSettings):
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
     gemini_api_key: Optional[str] = None
+    xai_api_key: Optional[str] = None
+    serper_api_key: Optional[str] = None
     
     # Paths (Week 4+)
     chroma_path: str = "./data/chroma"
