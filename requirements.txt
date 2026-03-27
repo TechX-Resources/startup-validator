@@ -7,6 +7,8 @@ pydantic
 
 # Tools (Week 3)
 python-dotenv
+google-genai
+openai
 
 # Testing (Week 2+)
 pytest
