@@ -1,14 +1,22 @@
-# app/models
+# Models Layer 🧠
 
-**Purpose:** LLM interaction layer — abstraction for model calls so you can swap OpenAI/Claude without changing agent code.
+**Week 2: LLM Client Abstraction + Base Classes**
 
-**What students will implement:**
-- A single client class/interface that:
-  - Accepts a prompt (and optional system message).
-  - Calls the chosen LLM API (OpenAI or Claude).
-  - Returns raw text or structured output (e.g. JSON) for the agent to use.
-- Handle errors and timeouts; no real API keys in repo (use env).
+Single interface for OpenAI/Claude LLMs. Switch providers with one config change.
 
-**Weeks:** 2.
+## 🎯 Purpose
 
-**Files:** `llm_client.py` — placeholder class with TODOs.
+- **Abstraction**: `LLMClient` interface - swap OpenAI ↔ Claude without code changes
+- **Scoring**: Standardized `ValidationScore` across all validation dimensions  
+- **Factory**: `LLMFactory.create()` - auto-detects best available provider
+- **Type Safety**: Full Pydantic + type hints for agent tooling
+
+# Unit tests
+pytest tests/test_models.py
+
+# Connection test (requires API key)
+python -c "from app.models import test_connection; test_connection(True)"
+
+# Live test
+uvicorn app.main:app --reload
+# Visit http://localhost:8000/docs
