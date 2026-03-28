@@ -1,8 +1,7 @@
 import logging
-import os
 import httpx
-
 from app.config import settings
+from app.utils.helpers import save_data
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +30,13 @@ def web_search(query: str, max_results: int = 5) -> list[dict]:
         response = httpx.post(SERPER_ENDPOINT, headers=headers, json=payload, timeout=20)
         response.raise_for_status()
         data = response.json()
+        
+        # Save raw Serper data for history and debugging
+        try:
+            save_data(data, category='raw', base_filename='web_search')
+        except Exception as e:
+            logger.warning(f"Failed to save raw search data: {e}")
+
     except httpx.HTTPStatusError as e:
         logger.error(f"Serper error (status {e.response.status_code}): {e}")
         return []

@@ -60,6 +60,14 @@ def market_estimator(market_or_industry: str) -> dict:
         if not isinstance(market_data, dict):
             logger.warning("LLM returned non-dict for market estimate. Falling back.")
             raise ValueError("LLM returned non-dict for market estimate")
+        
+        # Save processed results
+        from app.utils.helpers import save_data
+        try:
+            save_data(market_data, category='processed', base_filename='market_estimate')
+        except Exception as e:
+            logger.warning(f"Failed to save processed market data: {e}")
+            
         return market_data
 
     except Exception as e:

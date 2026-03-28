@@ -8,6 +8,8 @@ class LLMProvider(str, Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GROQ = "groq"
+    GROK = "grok"
+    GEMINI = "gemini"
 
 class Settings(BaseSettings):
     model_config = ConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
@@ -18,7 +20,9 @@ class Settings(BaseSettings):
     llm_provider: LLMProvider = LLMProvider.AUTO
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
-    groq_api_key: Optional[str] = None
+    xai_api_key: Optional[str] = None
+    gemini_api_key: Optional[str] = None
+    serper_api_key: Optional[str] = None
     chroma_path: str = "./data/chroma"
     vector_db_path: str = "./data/embeddings"
 
