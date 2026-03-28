@@ -3,6 +3,7 @@ import logging
 import re
 from app.tools.web_search import web_search
 from app.models.llm_client import LLMClient
+from app.utils.helpers import save_data
 
 logger = logging.getLogger(__name__)
 llm = LLMClient()
@@ -74,8 +75,14 @@ def competitor_finder(idea_summary: str, domain: str = None) -> list[dict]:
             raise e
         if not isinstance(competitors, list):
             logger.warning("LLM returned non-list for competitors. Falling back.")
-            return [{"name": res["title"], "description": res["snippet"], "url": res["link"]} for res in search_results[:3]]
-            
+            competitors = [{"name": res["title"], "description": res["snippet"], "url": res["link"]} for res in search_results[:3]]
+
+        # Save processed results
+        try:
+            save_data(competitors, category='processed', base_filename='competitors')
+        except Exception as e:
+            logger.warning(f"Failed to save processed competitor data: {e}")
+
         return competitors
 
     except Exception as e:

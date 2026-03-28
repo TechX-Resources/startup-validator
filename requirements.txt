@@ -10,6 +10,9 @@ python-dotenv
 google-genai
 openai
 
+# Memory Context
+chromadb
+
 # Testing (Week 2+)
 pytest
 httpx
