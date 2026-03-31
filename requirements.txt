@@ -9,7 +9,13 @@ pydantic-settings
 # Add these for Azure OpenAI
 openai
 python-dotenv
+google-genai
+openai
 
 # Testing (Week 2+)
 pytest
 httpx
+
+# Security & Settings 
+slowapi
+pydantic-settings

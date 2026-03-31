@@ -5,70 +5,140 @@ LLM client abstraction for Azure OpenAI and OpenAI.
 from __future__ import annotations
 
 import os
+import logging
+from app.config import settings
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
+logger = logging.getLogger(__name__)
 
 class LLMClient:
-    """Provider-agnostic LLM client with Azure OpenAI as first preference."""
+    def __init__(self, api_key: str = None, model_name: str = None):
+        self.xai_key = settings.xai_api_key
+        self.openai_key = api_key or settings.openai_api_key
+        self.anthropic_key = settings.anthropic_api_key
+        self.gemini_key = settings.gemini_api_key
+        self._provider = None # Will be set below
+        self._client = None
+        self.model_name = model_name
 
-    def __init__(self, api_key: str | None = None, model_name: str | None = None):
-        azure_key = os.getenv("AZURE_OPENAI_API_KEY")
-        azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-        azure_api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
-        azure_deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4")
+        provider_preference = settings.llm_provider.lower() if hasattr(settings, 'llm_provider') else "grok"
 
-        openai_key = api_key or os.getenv("OPENAI_API_KEY")
+        # 1. Try OpenAI if preferred or if auto
+        if (provider_preference in ["auto", "openai"]) and self.openai_key:
+            try:
+                from openai import OpenAI
+                self.model_name = self.model_name or "gpt-4o-mini"
+                self._client = OpenAI(api_key=self.openai_key)
+                self._provider = "openai"
+                logger.info(f"LLMClient initialized with OpenAI ({self.model_name})")
+            except ImportError:
+                logger.warning("OpenAI library not found even though key is provided.")
 
-        if azure_key and azure_endpoint:
-            from openai import AzureOpenAI
+        # 2. Try Grok if preferred or if auto
+        if not self._provider and (provider_preference in ["auto", "grok", "groq", "xai"]) and self.xai_key:
+            try:
+                from openai import OpenAI
+                self.model_name = self.model_name or "llama-3.1-8b-instant"
+                self._client = OpenAI(
+                    api_key=self.xai_key,
+                    base_url="https://api.groq.com/openai/v1",
+                )
+                self._provider = "grok"
+                logger.info(f"LLMClient initialized with Grok ({self.model_name})")
+            except ImportError:
+                logger.warning("OpenAI library not found for Groq initialization.")
 
-            self._provider = "azure"
-            self.model_name = model_name or azure_deployment
-            self._client = AzureOpenAI(
-                api_key=azure_key,
-                api_version=azure_api_version,
-                azure_endpoint=azure_endpoint,
-            )
-        elif openai_key:
-            from openai import OpenAI
+        # 3. Try Anthropic if preferred or if auto
+        if not self._provider and (provider_preference in ["auto", "anthropic"]) and self.anthropic_key:
+            try:
+                from anthropic import Anthropic
+                self.model_name = self.model_name or "claude-3-5-sonnet-20240620"
+                self._client = Anthropic(api_key=self.anthropic_key)
+                self._provider = "anthropic"
+                logger.info(f"LLMClient initialized with Anthropic ({self.model_name})")
+            except ImportError:
+                logger.warning("Anthropic library not found even though key is provided.")
 
-            self._provider = "openai"
-            self.model_name = model_name or "gpt-4o-mini"
-            self._client = OpenAI(api_key=openai_key)
-        else:
-            raise ValueError(
-                "No API key found. Set AZURE_OPENAI_API_KEY + AZURE_OPENAI_ENDPOINT "
-                "or OPENAI_API_KEY in .env"
-            )
+        # 4. Try Gemini if preferred or if auto
+        if not self._provider and (provider_preference in ["auto", "gemini"]) and self.gemini_key:
+            try:
+                from google import genai
+                self.model_name = self.model_name or "gemini-2.0-flash"
+                self._client = genai.Client(api_key=self.gemini_key)
+                self._provider = "gemini"
+                logger.info(f"LLMClient initialized with Gemini ({self.model_name})")
+            except ImportError:
+                logger.warning("Google GenAI library (google-genai) not found even though GEMINI_API_KEY is provided.")
+            except Exception as e:
+                logger.error(f"Gemini init error: {e}")
+
+
+        if not self._provider:
+            logger.error("No LLM provider could be initialized. Please set API keys and install required libraries.")
+            # We don't raise here yet to allow the 'chat' method to handle it or for mock mode.
 
     def chat(self, messages: list[dict], **kwargs) -> str:
-        """Send chat messages and return assistant text content."""
-        try:
-            response = self._client.chat.completions.create(
-                model=self.model_name,
-                messages=messages,
-                **kwargs,
-            )
-            return response.choices[0].message.content or ""
-        except Exception as exc:
-            raise RuntimeError(f"Error calling {self._provider} API: {str(exc)}") from exc
+        if not self._provider:
+            return '{"error": "No LLM provider initialized", "message": "Please set API keys and install required libraries."}'
 
-    def chat_with_tools(self, messages: list[dict], tools: list[dict], **kwargs) -> dict:
-        """Send chat messages with tool definitions and return content/tool calls."""
         try:
-            response = self._client.chat.completions.create(
-                model=self.model_name,
-                messages=messages,
-                tools=tools,
-                **kwargs,
-            )
-            message = response.choices[0].message
-            result = {"content": message.content}
-            if message.tool_calls:
-                result["tool_calls"] = message.tool_calls
-            return result
-        except Exception as exc:
-            raise RuntimeError(f"Error calling {self._provider} API with tools: {str(exc)}") from exc
+            if self._provider == "openai":
+                response = self._client.chat.completions.create(
+                    model=self.model_name,
+                    messages=messages,
+                    **kwargs
+                )
+                return response.choices[0].message.content
+            
+            elif self._provider == "anthropic":
+                system = next((m['content'] for m in messages if m['role'] == 'system'), "")
+                msgs = [m for m in messages if m['role'] != 'system']
+                response = self._client.messages.create(
+                    model=self.model_name,
+                    system=system,
+                    messages=msgs,
+                    max_tokens=2048,
+                    **kwargs
+                )
+                return response.content[0].text
+            
+            elif self._provider == "gemini":
+                # Convert messages to format expected by google-genai (simple list of content strings or parts)
+                # Actually, google-genai accepts content objects. For simplicity, we just join them like before
+                # or pass them as a list if we want to be more sophisticated.
+                prompt = "\n".join([f"{m['role']}: {m['content']}" for m in messages])
+                response = self._client.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt
+                )
+                return response.text
+            elif self._provider == "grok":
+                logger.info(f"Chatting with Groq using model {self.model_name}")
+                try:
+                    response = self._client.chat.completions.create(
+                        model=self.model_name,
+                        messages=messages,
+                        **kwargs
+                    )
+                    # Log the full response for more visibility during debug
+                    logger.debug(f"Groq response: {response}")
+                    
+                    if not response.choices:
+                        logger.warning("Groq returned no choices.")
+                        return ""
+                        
+                    content = response.choices[0].message.content
+                    if not content:
+                        logger.warning("Groq returned empty content.")
+                        # Check for finish_reason
+                        finish_reason = response.choices[0].finish_reason
+                        logger.info(f"Groq finish_reason: {finish_reason}")
+                        
+                    return content or ""
+                except Exception as api_err:
+                    logger.error(f"Groq API call failed: {api_err}")
+                    raise api_err
+        except Exception as e:
+            logger.error(f"Error during LLM chat with {self._provider}: {e}")
+            return '{"error": "LLM call failed", "details": "' + str(e) + '"}'
+
+        return ""
