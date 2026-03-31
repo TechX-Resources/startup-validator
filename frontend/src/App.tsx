@@ -676,11 +676,11 @@ export default function App() {
                 onChange={(e) => setIdea(e.target.value)}
                 placeholder="Describe your startup idea in plain English… e.g. An AI app that summarizes long PDFs for students in 3 bullet points"
                 rows={5}
-                className="w-full bg-white/[0.03] backdrop-blur-xl border border-indigo-400/25 rounded-2xl p-5 pr-16 text-white placeholder-slate-500 resize-none focus:outline-none focus:border-indigo-400/50 focus:ring-1 focus:ring-indigo-400/20 transition-all text-[15px] leading-relaxed"
+                className="w-full bg-[#0a1024]/85 backdrop-blur-md border border-indigo-300/35 rounded-2xl p-5 pr-16 text-slate-100 placeholder-slate-400 resize-none focus:outline-none focus:border-indigo-300/60 focus:ring-1 focus:ring-indigo-300/30 transition-all text-[15px] leading-relaxed shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
               />
               <div className="absolute bottom-3.5 right-4 text-xs font-mono tabular-nums select-none">
-                <span className={idea.length > 500 ? 'text-amber-400' : 'text-slate-600'}>{idea.length}</span>
-                <span className="text-slate-700">/500</span>
+                <span className={idea.length > 500 ? 'text-amber-300' : 'text-slate-300'}>{idea.length}</span>
+                <span className="text-slate-400">/500</span>
               </div>
             </div>
 

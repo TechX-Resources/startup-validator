@@ -56,11 +56,15 @@ data/embeddings/*
 .pytest_cache/
 .coverage
 htmlcov/
+distance_task.py
+test.py
+test_azure.py
 
 # Node.js (frontend)
 node_modules/
 frontend/dist/
 frontend/node_modules/
+package-lock.json
 
 # Cursor IDE
 .cursor/

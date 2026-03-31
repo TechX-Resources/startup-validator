@@ -1,22 +1,58 @@
 """
-Validator agent — MCP-style orchestration: reason → choose tool → execute → repeat.
-Week 5: Implement the loop and wire to LLM + tools + memory.
+Validator agent — AI-powered startup idea validation using Azure OpenAI.
+Week 5: Implemented with LLM reasoning and structured output.
 """
+
+import json
+from app.models.llm_client import LLMClient
+from app.prompts.templates import build_validation_messages
 
 
 def run_validator(idea: str, context: dict = None) -> dict:
     """
-    Main entry: validate a startup idea using LLM + tools + optional context.
+    Main entry: validate a startup idea using Azure OpenAI LLM.
     Returns a structured validation result (see app/schemas/response_schema.py).
-
-    Flow (TODO implement in Week 5):
-    1. Build initial messages (system prompt + user idea + optional context from memory).
-    2. Loop:
-       a. Call LLM (model layer) with current messages.
-       b. If LLM says "call tool X with args Y" → call tool, append result to messages, repeat.
-       c. If LLM says "final answer" → parse into response_schema, return.
-    3. Optional: store idea + result in memory (Week 4/5).
     """
-    # TODO: Load LLM client from app.models, tools from app.tools.
-    # TODO: Implement loop; return dict matching response_schema.
-    raise NotImplementedError("Implement validator loop in Week 5.")
+    if not idea or not idea.strip():
+        raise ValueError("Idea cannot be empty.")
+    
+    # Initialize LLM client
+    client = LLMClient()
+    
+    # Build messages using centralized prompts
+    messages = build_validation_messages(idea)
+    
+    # Call LLM
+    try:
+        response_text = client.chat(messages=messages, temperature=0.7, max_tokens=1500)
+        
+        # Parse JSON response
+        # Try to extract JSON from markdown code blocks if present
+        if "```json" in response_text:
+            json_str = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            json_str = response_text.split("```")[1].split("```")[0].strip()
+        else:
+            json_str = response_text.strip()
+        
+        result = json.loads(json_str)
+        
+        # Validate required fields
+        required_fields = ["score", "summary", "strengths", "risks", "competitors"]
+        for field in required_fields:
+            if field not in result:
+                raise ValueError(f"Missing required field: {field}")
+        
+        # Ensure score is within bounds
+        result["score"] = max(0.0, min(10.0, float(result["score"])))
+        
+        # Ensure market_notes exists (optional field)
+        if "market_notes" not in result:
+            result["market_notes"] = None
+        
+        return result
+        
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"Failed to parse LLM response as JSON: {str(e)}. Response: {response_text[:200]}")
+    except Exception as e:
+        raise RuntimeError(f"Validation failed: {str(e)}")

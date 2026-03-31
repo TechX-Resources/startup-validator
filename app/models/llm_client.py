@@ -1,3 +1,9 @@
+"""
+LLM client abstraction for Azure OpenAI and OpenAI.
+"""
+
+from __future__ import annotations
+
 import os
 import logging
 from app.config import settings
