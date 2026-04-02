@@ -1,16 +1,18 @@
+from app.utils.validators import sanitize_idea, validate_idea_length
+from app.services.validation_service import run_validation
+from app.schemas import IdeaInput, ValidationResponse
+from app.middleware import RequestLoggingMiddleware
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+from slowapi import Limiter
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from app.db.queries import get_top_funded_startups
+from fastapi import FastAPI, HTTPException, Request
 from dotenv import load_dotenv
 load_dotenv()
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
-from app.middleware import RequestLoggingMiddleware
-from app.schemas import IdeaInput, ValidationResponse
-from app.services.validation_service import run_validation
-from app.utils.validators import sanitize_idea, validate_idea_length
+
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -27,13 +29,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.exception_handler(RateLimitExceeded)
 async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     return JSONResponse(status_code=429, content={"detail": "Too many requests. Please slow down."})
 
+
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "startup-idea-validator-agent", "version": "0.3.0"}
+
 
 @app.post("/validate-idea", response_model=ValidationResponse)
 @limiter.limit("10/minute")
@@ -47,4 +52,16 @@ async def validate_idea(request: Request, body: IdeaInput):
         result = run_validation(idea)
         return ValidationResponse(**result)
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Validation failed. Please try again.")
+        raise HTTPException(
+            status_code=500, detail="Validation failed. Please try again.")
+
+
+@app.get("/db/top-funded")
+def fetch_top_funded_startups():
+    """
+    Returns the top funded startups from PostgreSQL.
+    """
+    return {
+        "source": "postgresql",
+        "data": get_top_funded_startups()
+    }
