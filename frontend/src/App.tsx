@@ -164,7 +164,7 @@ function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`skeleton rounded-lg ${className}`} />;
 }
 
-function ResultsSkeleton() {
+function ResultsSkeleton() 
   return (
     <div className="space-y-6">
       <div className="glass-card p-10 flex justify-center"><Skeleton className="w-52 h-52 !rounded-full" /></div>
@@ -463,7 +463,7 @@ function CTAFooter({ onValidateClick }: { onValidateClick: () => void }) {
           <span className="text-lg font-bold gradient-text select-none">IdeaProof</span>
           <span className="text-xs text-slate-600">Built with FastAPI + Claude + Vector DB</span>
           <a
-            href="https://github.com"
+            href="https://github.com/TechX-Resources/startup-validator/README.md"
             target="_blank"
             rel="noopener noreferrer"
             className="text-slate-600 hover:text-slate-400 transition-colors"
