@@ -1,18 +1,11 @@
 """
-Response schema — structured validation output. VERY IMPORTANT: keep stable for API and agent.
-Week 2: Define; use in agent output and API response.
+Response schema — structured output from validation agent.
+Week 2: Define; returned by validation_service and /validate-idea.
 """
 
 from pydantic import BaseModel, Field
+from typing import List
 
-# The schema defines the structure of API response
-# It includes:
-# - score: evaluation score(0-10)
-# - summary: short explanation of the evaluation
-# - strengths: key strengths of the idea
-# - risks: possible risks or challenges
-# - competitors: existing competitors
-# - market_notes: additional market insights 
 
 class ValidationResponse(BaseModel):
     """Structured validation result returned by the agent and API."""
