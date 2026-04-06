@@ -121,3 +121,29 @@ Then open: `http://localhost:8000/docs` for Swagger UI.
 ```
 
 See each folder’s **README.md** for detailed instructions.
+
+## API Usage
+
+### Validate Startup Idea
+
+**Endpoint:**  
+POST /validate-idea
+
+**Example Request:**
+```json
+{
+  "idea": "An AI app that summarizes long PDFs for students in 3 bullet points."
+}
+---
+
+**Example Response:**
+```json
+{
+  "score": 7.5,
+  "summary": "Strong idea with clear use case; market is competitive.",
+  "strengths": ["Clear problem", "Scalable"],
+  "risks": ["Competition"],
+  "competitors": ["Notion AI", "ChatPDF"],
+  "market_notes": "Growing demand in EdTech."
+}
+---
