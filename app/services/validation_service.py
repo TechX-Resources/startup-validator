@@ -1,8 +1,6 @@
 import json
 from app.models.llm_client import LLMClient
 
-llm = LLMClient()
-
 SYSTEM_PROMPT = """
 You are a startup idea validator. Respond ONLY with a valid JSON object:
 {
@@ -16,6 +14,7 @@ You are a startup idea validator. Respond ONLY with a valid JSON object:
 """
 
 def run_validation(idea: str, user_id: str = None, session_id: str = None) -> dict:
+    llm = LLMClient()
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": f"Validate this startup idea: {idea}"}

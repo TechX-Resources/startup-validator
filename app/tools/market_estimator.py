@@ -4,7 +4,7 @@ Takes an industry name (detected by competitor_finder) and returns
 TAM, growth rate, competition level, and dataset-backed insights.
 """
 
-from app.services.data_loader import load_processed
+from app.services.startup_db import industry_stats
 
 
 # Industry lookup table: TAM and growth rate estimates
@@ -29,25 +29,8 @@ _DEFAULT = {"tam": "Unknown", "growth_rate": "Unknown", "competition": "Unknown"
 
 
 def _dataset_stats(industry: str) -> dict:
-    """Pull real stats from the processed dataset for this industry."""
-    startups = load_processed()
-    sector = [s for s in startups if s.get("industry", "").lower() == industry.lower()]
-    if not sector:
-        return {"total_companies": 0}
-
-    funded = [s for s in sector if s.get("funding_total")]
-    avg_funding = sum(s["funding_total"] for s in funded) / len(funded) if funded else 0
-
-    statuses = [s.get("status") for s in sector if s.get("status")]
-    success = sum(1 for st in statuses if st in ("acquired", "ipo"))
-    success_rate = round(success / len(statuses) * 100, 1) if statuses else 0
-
-    return {
-        "total_companies": len(sector),
-        "avg_funding_usd": round(avg_funding),
-        "success_rate_pct": success_rate,
-        "vc_backed": sum(1 for s in sector if s.get("has_VC")),
-    }
+    """Pull real stats from SQLite for this industry."""
+    return industry_stats(industry)
 
 
 def market_estimator(market_or_industry: str) -> dict:

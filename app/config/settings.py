@@ -21,8 +21,11 @@ class Settings(BaseSettings):
     # Paths (Week 4+)
     chroma_path: str = "./data/chroma"
     
+    vector_db_path: Optional[str] = "./data/embeddings"
+
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"
 
 settings = Settings()

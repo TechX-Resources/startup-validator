@@ -11,6 +11,8 @@ scikit-learn
 
 # Tools (Week 3)
 python-dotenv
+groq
+pydantic-settings
 
 # Testing (Week 2+)
 pytest
