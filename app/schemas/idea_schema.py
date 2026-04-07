@@ -9,7 +9,11 @@ from pydantic import BaseModel, Field
 class IdeaInput(BaseModel):
     """Request body for /validate-idea."""
 
-    idea: str = Field(..., description="The startup idea to validate (plain text).")
+    idea: str = Field(
+        ..., 
+        description="The startup idea to validate (plain text).",
+        example="An AI app that summarizes long PDFs for students in 3 bullet points."
+        )
     # Optional: domain, industry, or extra context
     # domain: str | None = None
     # industry: str | None = None

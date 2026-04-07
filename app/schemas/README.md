@@ -28,3 +28,28 @@ uvicorn app.main:app --reload
 4.Open the API docs in browser:
 
 <http://127.0.0.1:8000/docs>
+
+## Example API Usage
+
+### Request
+
+POST /validate-idea
+
+```json
+{
+  "idea": "An AI app that summarizes PDFs for students"
+}
+```
+
+### Response
+
+```json
+{
+  "score": 7.5,
+  "summary": "Strong idea with clear use case; market is competitive.",
+  "strengths": ["Clear problem", "Scalable solution"],
+  "risks": ["High competition", "Monetization unclear"],
+  "competitors": ["Notion AI", "ChatPDF"],
+  "market_notes": "Growing demand in EdTech tools."
+}
+```
