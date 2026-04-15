@@ -80,17 +80,27 @@ def query_by_industry(industry: str) -> list[dict]:
 
 
 def industry_stats(industry: str) -> dict:
-    """Aggregate funding and success stats for an industry."""
+    """
+    Aggregate funding and success stats for an industry using a CTE
+    to separate base filtering from metric computation.
+    """
     with get_conn() as conn:
         row = conn.execute("""
+            WITH industry_cohort AS (
+                SELECT
+                    funding_total,
+                    status,
+                    has_vc
+                FROM startups
+                WHERE LOWER(industry) = LOWER(?)
+            )
             SELECT
-                COUNT(*)                                        AS total,
-                AVG(funding_total)                              AS avg_funding,
+                COUNT(*)                                                AS total,
+                AVG(funding_total)                                      AS avg_funding,
                 SUM(CASE WHEN status IN ('acquired','ipo')
-                         THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS success_rate,
-                SUM(has_vc)                                     AS vc_backed
-            FROM startups
-            WHERE LOWER(industry) = LOWER(?)
+                         THEN 1 ELSE 0 END) * 100.0 / COUNT(*)         AS success_rate,
+                SUM(has_vc)                                             AS vc_backed
+            FROM industry_cohort
         """, (industry,)).fetchone()
     return {
         "total_companies":  row["total"] or 0,

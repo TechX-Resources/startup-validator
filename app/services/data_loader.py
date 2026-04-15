@@ -12,6 +12,8 @@ import json
 import csv
 from pathlib import Path
 from app.services.startup_db import save_records, query_all
+from app.services.schema_monitor import check_schema
+from app.services.scoring import batch_rescore, detect_anomalies
 
 
 RAW_DIR = Path("data/raw")
@@ -83,6 +85,9 @@ def load_csv(csv_path: str) -> tuple[list[dict], dict]:
     with open(path, encoding="utf-8", errors="ignore") as f:
         reader = csv.DictReader(f)
         headers = reader.fieldnames or []
+        # Schema drift check on every run
+        check_schema(headers)
+
         col_map = {
             field: _find_column(headers, aliases)
             for field, aliases in COLUMN_ALIASES.items()
@@ -192,6 +197,11 @@ class StartupDataLoader:
         # Save to JSON as backup
         output = save_json(records)
         print(f"  Saved {len(records)} companies to {output}")
+
+        # Batch re-score and anomaly detection run automatically
+        batch_rescore("v1")
+        detect_anomalies()
+
         print(f"\nSample: {records[0]}")
         return output
 

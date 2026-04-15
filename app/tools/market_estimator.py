@@ -21,8 +21,21 @@ INDUSTRY_DATA = {
     "music":       {"tam": "$26B",   "growth_rate": "7%",  "competition": "Medium"},
     "travel":      {"tam": "$1.5T",  "growth_rate": "8%",  "competition": "High"},
     "health":      {"tam": "$665B",  "growth_rate": "18%", "competition": "Medium"},
+    "fitness":     {"tam": "$96B",   "growth_rate": "20%", "competition": "High"},
+    "healthcare":  {"tam": "$665B",  "growth_rate": "18%", "competition": "Medium"},
     "education":   {"tam": "$7.3T",  "growth_rate": "16%", "competition": "Medium"},
+    "edtech":      {"tam": "$7.3T",  "growth_rate": "16%", "competition": "Medium"},
     "cleantech":   {"tam": "$380B",  "growth_rate": "22%", "competition": "Low"},
+    "fintech":     {"tam": "$310B",  "growth_rate": "23%", "competition": "High"},
+    "finance":     {"tam": "$310B",  "growth_rate": "23%", "competition": "High"},
+    "ai":          {"tam": "$1.8T",  "growth_rate": "37%", "competition": "High"},
+    "saas":        {"tam": "$197B",  "growth_rate": "18%", "competition": "High"},
+    "marketplace": {"tam": "$680B",  "growth_rate": "12%", "competition": "High"},
+    "logistics":   {"tam": "$505B",  "growth_rate": "6%",  "competition": "Medium"},
+    "real estate": {"tam": "$370B",  "growth_rate": "5%",  "competition": "Medium"},
+    "food":        {"tam": "$997B",  "growth_rate": "9%",  "competition": "High"},
+    "social":      {"tam": "$231B",  "growth_rate": "11%", "competition": "High"},
+    "security":    {"tam": "$173B",  "growth_rate": "14%", "competition": "Medium"},
 }
 
 _DEFAULT = {"tam": "Unknown", "growth_rate": "Unknown", "competition": "Unknown"}

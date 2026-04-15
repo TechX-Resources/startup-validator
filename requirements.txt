@@ -8,6 +8,8 @@ pydantic
 # Data pipeline
 pandas
 scikit-learn
+sentence-transformers
+numpy
 
 # Tools (Week 3)
 python-dotenv
