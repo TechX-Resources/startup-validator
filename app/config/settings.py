@@ -29,5 +29,6 @@ class Settings(BaseSettings):
     serpapi_api_key: Optional[str] = None
     chroma_path: str = "./data/chroma"
     vector_db_path: str = "./data/embeddings"
+    similarity_threshold: float = 0.7
 
 settings = Settings()

@@ -47,6 +47,7 @@ data/processed/*
 data/embeddings/*
 !data/embeddings/.gitkeep
 !data/embeddings/README.md
+data/test_embeddings/*
 
 # Jupyter
 .ipynb_checkpoints/

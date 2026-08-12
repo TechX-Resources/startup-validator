@@ -16,8 +16,23 @@ You are a startup idea validator. Respond ONLY with a valid JSON object:
 """
 
 def run_validation(idea: str, user_id: str = None, session_id: str = None) -> dict:
+    from app.memory.memory_store import get_context, save
+
+    # 1. Retrieve RAG context (semantically similar past validations)
+    context_items = get_context(idea)
+    
+    rag_instructions = ""
+    if context_items:
+        rag_instructions = "\nHere are similar startup ideas we validated in the past. Use them to maintain consistency and context:\n"
+        for item in context_items:
+            rag_instructions += f"- Idea: {item['idea']}\n  Result: {json.dumps(item['result'])}\n"
+            
+    system_prompt_with_context = SYSTEM_PROMPT
+    if rag_instructions:
+        system_prompt_with_context += rag_instructions
+
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": system_prompt_with_context},
         {"role": "user", "content": f"Validate this startup idea: {idea}"}
     ]
     try:
@@ -39,6 +54,9 @@ def run_validation(idea: str, user_id: str = None, session_id: str = None) -> di
         if not all(k in result for k in required_keys):
             raise ValueError("LLM response missing required validation keys")
             
+        # 2. Save the successful validation result to memory store for future runs
+        save(idea, result)
+        
         return result
         
     except Exception as e:

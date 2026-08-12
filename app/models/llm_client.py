@@ -136,3 +136,30 @@ class LLMClient:
             return '{"error": "LLM call failed", "details": "' + str(e) + '"}'
 
         return ""
+
+    def embed(self, text: str) -> list[float]:
+        if not self._provider:
+            logger.warning("No LLM provider initialized for embedding. Returning mock vector.")
+            return [0.0] * 1536
+
+        try:
+            if self._provider == "openai" or self._provider == "grok":
+                response = self._client.embeddings.create(
+                    model="text-embedding-3-small",
+                    input=[text]
+                )
+                return response.data[0].embedding
+            elif self._provider == "gemini":
+                response = self._client.models.embed_content(
+                    model="text-embedding-004",
+                    contents=text
+                )
+                return response.embeddings[0].values
+            elif self._provider == "anthropic":
+                logger.warning("Anthropic does not offer a native embedding model. Returning mock vector.")
+                return [0.0] * 1536
+        except Exception as e:
+            logger.error(f"Error generating embedding with {self._provider}: {e}")
+            return [0.0] * 1536
+        
+        return [0.0] * 1536
