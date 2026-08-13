@@ -4,6 +4,8 @@ Week 2: Single import point for all model-related functionality.
 Usage: from app.models import LLMFactory, ValidationScore
 """
 
+import asyncio
+
 __version__ = "0.1.0"
 
 # Base classes

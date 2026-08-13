@@ -17,3 +17,4 @@ httpx
 # Security & Settings 
 slowapi
 pydantic-settings
+chromadb
